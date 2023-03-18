@@ -1,15 +1,15 @@
 {
   "files": {
     "main.css": "/merkle-data/static/css/main.073c9b0a.css",
-    "main.js": "/merkle-data/static/js/main.ac8d2620.js",
+    "main.js": "/merkle-data/static/js/main.e3cd28e4.js",
     "static/js/787.e4c2f9ae.chunk.js": "/merkle-data/static/js/787.e4c2f9ae.chunk.js",
     "index.html": "/merkle-data/index.html",
     "main.073c9b0a.css.map": "/merkle-data/static/css/main.073c9b0a.css.map",
-    "main.ac8d2620.js.map": "/merkle-data/static/js/main.ac8d2620.js.map",
+    "main.e3cd28e4.js.map": "/merkle-data/static/js/main.e3cd28e4.js.map",
     "787.e4c2f9ae.chunk.js.map": "/merkle-data/static/js/787.e4c2f9ae.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.073c9b0a.css",
-    "static/js/main.ac8d2620.js"
+    "static/js/main.e3cd28e4.js"
   ]
 }
