@@ -17,16 +17,25 @@ const InputGroup = styled.div`
 
 const Select = styled.select`
   margin-right: 10px;
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
 `;
 
 const Input = styled.input`
   margin-right: 10px;
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
 `;
 
 const TextArea = styled.textarea`
   width: 100%;
   min-height: 150px;
   resize: vertical;
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
 `;
 
 const Button = styled.button`
@@ -40,6 +49,11 @@ const Button = styled.button`
   &:hover {
     background-color: #0056b3;
   }
+`;
+
+const ButtonBlock = styled.div`
+  display: flex;
+  margin-bottom: 18px;
 `;
 
 interface Value {
@@ -128,7 +142,11 @@ function App() {
                     value={value.value}
                     onChange={(e) => {
                       const newValues = [...values];
-                      newValues[index].value = e.target.value;
+                      if (value.type.includes("uint")) {
+                        newValues[index].value = parseInt(e.target.value);
+                      } else {
+                        newValues[index].value = e.target.value;
+                      }
                       setValues(newValues);
                     }}
                   />
@@ -146,7 +164,7 @@ function App() {
             })}
           </Section>
 
-          <Section>
+          <ButtonBlock>
             <Button
               onClick={() => {
                 const newValues = [...values];
@@ -156,9 +174,7 @@ function App() {
             >
               Add
             </Button>
-          </Section>
 
-          <Section>
             <Button
               onClick={() => {
                 const valuesWithSalt: ValueWithSalt[] = values.map((v) => ({
@@ -180,9 +196,7 @@ function App() {
             >
               Encode
             </Button>
-          </Section>
 
-          <Section>
             <Button
               onClick={() => {
                 const data = JSON.parse(prompt("Paste data") || "");
@@ -193,9 +207,7 @@ function App() {
             >
               Import
             </Button>
-          </Section>
 
-          <Section>
             <Button
               onClick={() => {
                 if (!data) {
@@ -228,15 +240,19 @@ function App() {
             >
               Prove
             </Button>
-          </Section>
+          </ButtonBlock>
         </div>
 
         <Section>
-          <TextArea value={JSON.stringify(data)} readOnly />
+          <TextArea
+            value={data ? JSON.stringify(data) : ""}
+            readOnly
+            placeholder={"Encoded tree"}
+          />
         </Section>
 
         <Section>
-          <TextArea value={outputProof} readOnly />
+          <TextArea value={outputProof} readOnly placeholder={"Proof"} />
         </Section>
       </WhitePageContainer>
 
@@ -244,7 +260,7 @@ function App() {
         <h3>Verifier</h3>
 
         <Section>
-          <input
+          <Input
             type="text"
             placeholder="root"
             value={verifyMerkleRoot}
@@ -262,32 +278,34 @@ function App() {
             }}
           />
         </Section>
-        <Button
-          onClick={() => {
-            try {
-              const proof = JSON.parse(proofToVerify);
-              const verified = StandardMerkleTree.verifyMultiProof(
-                verifyMerkleRoot,
-                ["string", "string", "bytes", "bytes32"],
-                proof
-              );
+        <Section>
+          <Button
+            onClick={() => {
+              try {
+                const proof = JSON.parse(proofToVerify);
+                const verified = StandardMerkleTree.verifyMultiProof(
+                  verifyMerkleRoot,
+                  ["string", "string", "bytes", "bytes32"],
+                  proof
+                );
 
-              alert(`Verified: ${verified}`);
+                alert(`Verified: ${verified}`);
 
-              if (verified) {
-                setCleanData(JSON.stringify(decodeValues(proof.leaves)));
+                if (verified) {
+                  setCleanData(JSON.stringify(decodeValues(proof.leaves)));
+                }
+              } catch (e) {
+                alert("Fail!");
+                console.error(e);
               }
-            } catch (e) {
-              alert("Fail!");
-              console.error(e);
-            }
-          }}
-        >
-          Verify
-        </Button>
+            }}
+          >
+            Verify
+          </Button>
+        </Section>
 
         <Section>
-          <TextArea value={cleanData} />
+          <TextArea value={cleanData} placeholder={"decoded proof"} readOnly />
         </Section>
       </WhitePageContainer>
     </>
