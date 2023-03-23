@@ -117,6 +117,7 @@ function App() {
                     }}
                   >
                     <option value="string">string</option>
+                    <option value="bool">bool</option>
                     <option value="uint8">uint8</option>
                     <option value="uint32">uint32</option>
                     <option value="uint64">uint64</option>
@@ -233,8 +234,13 @@ function App() {
                   []
                 );
 
+                const multiProof = tree.getMultiProof(checkedIndexes);
+
                 setOutputProof(
-                  JSON.stringify(tree.getMultiProof(checkedIndexes))
+                  JSON.stringify({
+                    ...multiProof,
+                    leaves: decodeValues(multiProof.leaves),
+                  })
                 );
               }}
             >
@@ -286,13 +292,16 @@ function App() {
                 const verified = StandardMerkleTree.verifyMultiProof(
                   verifyMerkleRoot,
                   ["string", "string", "bytes", "bytes32"],
-                  proof
+                  {
+                    ...proof,
+                    leaves: encodeValues(proof.leaves),
+                  }
                 );
 
                 alert(`Verified: ${verified}`);
 
                 if (verified) {
-                  setCleanData(JSON.stringify(decodeValues(proof.leaves)));
+                  setCleanData(JSON.stringify(proof.leaves));
                 }
               } catch (e) {
                 alert("Fail!");
