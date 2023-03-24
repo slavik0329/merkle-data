@@ -56,17 +56,21 @@ const ButtonBlock = styled.div`
   margin-bottom: 18px;
 `;
 
-interface Value {
+interface MerkleValue {
   type: string;
   name: string;
   value: any;
-  checked?: boolean;
 }
 
-type EncodedValue = [string, string, string, string];
-type ValueWithSalt = Value & { salt: string };
+const merkleValueAbiEncoding = ["string", "string", "bytes", "bytes32"];
 
-function encodeValues(inValues: ValueWithSalt[]): EncodedValue[] {
+type EncodedMerkleValue = [string, string, string, string];
+type MerkleValueWithCheck = MerkleValue & { checked: boolean };
+type MerkleValueWithSalt = MerkleValue & { salt: string };
+
+function encodeMerkleValues(
+  inValues: MerkleValueWithSalt[]
+): EncodedMerkleValue[] {
   return inValues.map((v) => [
     v.type,
     v.name,
@@ -75,7 +79,9 @@ function encodeValues(inValues: ValueWithSalt[]): EncodedValue[] {
   ]);
 }
 
-function decodeValues(inValues: EncodedValue[]): ValueWithSalt[] {
+function decodeMerkleValues(
+  inValues: EncodedMerkleValue[]
+): MerkleValueWithSalt[] {
   return inValues.map((v) => ({
     type: v[0],
     name: v[1],
@@ -84,16 +90,23 @@ function decodeValues(inValues: EncodedValue[]): ValueWithSalt[] {
   }));
 }
 
+function encodeValuesToMerkleTree(valuesWithSalt: MerkleValueWithSalt[]) {
+  const encodedValues = encodeMerkleValues(valuesWithSalt);
+
+  const tree = StandardMerkleTree.of(encodedValues, merkleValueAbiEncoding);
+  return tree;
+}
+
 function App() {
-  const [values, setValues] = React.useState<Value[]>([
-    { type: "string", name: "", value: "" },
+  const [values, setValues] = React.useState<MerkleValueWithCheck[]>([
+    { type: "string", name: "", value: "", checked: false },
   ]);
 
   const [proofToVerify, setProofToVerify] = React.useState<string>("");
   const [verifyMerkleRoot, setVerifyMerkleRoot] = React.useState<string>("");
   const [data, setData] = React.useState<{
     root: string;
-    values: ValueWithSalt[];
+    values: MerkleValueWithSalt[];
   } | null>(null);
   const [outputProof, setOutputProof] = React.useState<string>("");
   const [cleanData, setCleanData] = React.useState<string>("");
@@ -169,7 +182,12 @@ function App() {
             <Button
               onClick={() => {
                 const newValues = [...values];
-                newValues.push({ type: "string", name: "", value: "" });
+                newValues.push({
+                  type: "string",
+                  name: "",
+                  value: "",
+                  checked: false,
+                });
                 setValues(newValues);
               }}
             >
@@ -178,19 +196,14 @@ function App() {
 
             <Button
               onClick={() => {
-                const valuesWithSalt: ValueWithSalt[] = values.map((v) => ({
-                  ...v,
-                  salt: ethers.utils.hexlify(ethers.utils.randomBytes(32)),
-                }));
+                const valuesWithSalt: MerkleValueWithSalt[] = values.map(
+                  (v) => ({
+                    ...v,
+                    salt: ethers.utils.hexlify(ethers.utils.randomBytes(32)),
+                  })
+                );
 
-                const encodedValues = encodeValues(valuesWithSalt);
-
-                const tree = StandardMerkleTree.of(encodedValues, [
-                  "string",
-                  "string",
-                  "bytes",
-                  "bytes32",
-                ]);
+                const tree = encodeValuesToMerkleTree(valuesWithSalt);
 
                 setData({ root: tree.root, values: valuesWithSalt });
               }}
@@ -215,14 +228,12 @@ function App() {
                   return;
                 }
 
-                const encodedValues = encodeValues(data.values);
+                const encodedValues = encodeMerkleValues(data.values);
 
-                const tree = StandardMerkleTree.of(encodedValues, [
-                  "string",
-                  "string",
-                  "bytes",
-                  "bytes32",
-                ]);
+                const tree = StandardMerkleTree.of(
+                  encodedValues,
+                  merkleValueAbiEncoding
+                );
 
                 const checkedIndexes: number[] = values.reduce(
                   (acc: number[], v, i) => {
@@ -239,7 +250,7 @@ function App() {
                 setOutputProof(
                   JSON.stringify({
                     ...multiProof,
-                    leaves: decodeValues(multiProof.leaves),
+                    leaves: decodeMerkleValues(multiProof.leaves),
                   })
                 );
               }}
@@ -291,10 +302,10 @@ function App() {
                 const proof = JSON.parse(proofToVerify);
                 const verified = StandardMerkleTree.verifyMultiProof(
                   verifyMerkleRoot,
-                  ["string", "string", "bytes", "bytes32"],
+                  merkleValueAbiEncoding,
                   {
                     ...proof,
-                    leaves: encodeValues(proof.leaves),
+                    leaves: encodeMerkleValues(proof.leaves),
                   }
                 );
 
